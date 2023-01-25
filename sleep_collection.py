@@ -94,11 +94,7 @@ Find all the sleep times within the recieved data
 Returns a dictionary of sleep of the form
     {day (datetime day): {"duration": int, "source": String, "sleep": datetime, "wake": dateime}} 
 """
-def getSleepFromSleepSample(filename):
-    
-    f = open(filename)
-    data = json.load(f)
-    f.close()
+def getSleepFromSleepSample(data):
 
     sleep_dict = {}
 
@@ -152,12 +148,8 @@ Find all the sleep times within the recieved data
 Returns a dictionary of sleep of the form
         {day (datetime day): {"duration": int, "source": String, "sleep": datetime, "wake": dateime}} 
 """
-def getSleepFromAccelerationSample(filename):
+def getSleepFromAccelerationSample(data):
   
-    f = open(filename)
-    data = json.load(f)
-    f.close()
-    
     sleep_duration = 0
     sleeping = False
 
@@ -218,7 +210,7 @@ Returns a dictionary of sleep of the form
     {day (datetime day): {"duration": int, "source": String, "sleep": datetime, "wake": dateime}} 
 """
 
-def getSleepFromSteps(filename, disturbance_steps = 8,first_sleep_duration=3):
+def getSleepFromSteps(data, disturbance_steps = 8,first_sleep_duration=3):
     '''
     Find sleep durations based on steps from past year
     disturbance steps: how many steps before it is a wakeup versus a disturbance
@@ -226,9 +218,6 @@ def getSleepFromSteps(filename, disturbance_steps = 8,first_sleep_duration=3):
 
     Return: past year of sleep {date: {duration:, source:}
     '''
-
-    f = open(filename)
-    data = json.load(f)
 
     sleep_dict = {}
 

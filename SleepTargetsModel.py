@@ -1,5 +1,5 @@
 from re import L
-from sklearn.linear_model import SGDRegressor
+from sklearn.linear_model import LinearRegression
 import numpy as np
 
 class SleepTargetsModel():
@@ -9,24 +9,20 @@ class SleepTargetsModel():
     HIGH = 100 + MORING_BURN_DIF
 
     def __init__(self):
-        self.model = SGDRegressor(warm_start = True)
+        self.model = LinearRegression()
     
     def fit(self, X, y):
-        if isinstance(X, int):
-            X = np.array([[X]])
-        if isinstance(y, int):
-            y = np.array([y])
-
         model = self.model
         model.fit(X, y)
-        return model.score(X, y)
+        return model
     
-    def predict(self, burn):
-        model = self.model
+    def predict(self, weights, burn):
+        coef = weights["coef"]
+        intercept = weights['intercept']
         low, med, high = burn-self.LOW, burn-self.MED, burn-self.HIGH
-        low = model.predict(low) - self.MORING_BURN_DIF
-        med = model.predict(med) - self.MORING_BURN_DIF
-        high = model.predict(high) - self.MORING_BURN_DIF
+        low = low*coef + intercept - self.MORING_BURN_DIF
+        med = med*coef + intercept - self.MORING_BURN_DIF
+        high = high*coef + intercept - self.MORING_BURN_DIF
         return (low, med, high)
     
     def predict_burn_change(self, sleep_duration):

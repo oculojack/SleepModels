@@ -18,12 +18,16 @@ class SleepModel():
         Returns a dictionary with all the outputs of the sleep model
         Fills values that cannot be found with None
         """
+        f = open(data)
+        data = json.load(f)
+        f.close()
+
         ios = data["dataFromIOS"]
         database = data["dataFromDatabase"]
         #inputs to model
         sleep_sample = ios["SleepSample"]
         accelerometer_sample = ios["AccelerometerSample"]
-        filepath = database["userID"]
+        weights = database["weights"]
         last_burn = database["lastBurn"]
 
         sleep_dict = getSleep(sleep_sample, accelerometer_sample)
