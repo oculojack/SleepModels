@@ -1,5 +1,4 @@
 from SleepTargetsModel import SleepTargetsModel
-from SleepTargetsTraining import *
 import json
 
 class SleepTargetCalculation():
@@ -10,22 +9,30 @@ class SleepTargetCalculation():
         data = json.load(f)
         f.close()
 
-        database = data["dataFromDatabase"]
         #inputs to model
-        burn_prev = data["burnPrev"]
-        burn_now = data["burnNow"]
+        if not data.get('burnPrev'):
+            return None
+
+        prev_burn = data["burnPrev"]
+        last_burn = data["burnNow"]
         last_sleep = data["lastSleep"]
-        weights = database["weights"]
 
         model = SleepTargetsModel()
-        x = burn_now - burn_prev
-        y = last_sleep
 
-        if len(weights) == 0: #train with fake data
-            x = 
+        if not data.get('weights'): #train with fake data if no data present
+            coef, intercept = model.train(last_burn, prev_burn, last_sleep)
+        else:
+            weights = data["weights"]
+            coef = weights["coef"]
+            intercept = weights['intercept']
 
-        bt = model.predict(weights, burn_now) #tuple
+        bt = model.predict(coef, intercept, last_burn)
 
         burn_targets = {"low": str(bt[0]), "med": str(bt[1]), "high": str(bt[2])}
 
+        print(burn_targets)
         return burn_targets
+
+if __name__ == "__main__":
+    blah = SleepTargetCalculation()
+    blah.get("test_files/sleep_target_data.json")

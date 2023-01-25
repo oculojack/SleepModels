@@ -37,7 +37,7 @@ class SleepModel():
             # No data for sleep last night
             return self.create_json()
 
-        recoveryBurn, recoveryScore = self.get_recovery_burn(filepath, sleepLastNight, last_burn)
+        recoveryBurn, recoveryScore = self.get_recovery_burn(weights, sleepLastNight, last_burn)
         if not recoveryBurn == None:
             focusTimeline = self.get_focus_timeline(recoveryBurn, sleepTimeline)
         else: focusTimeline = None
@@ -62,7 +62,7 @@ class SleepModel():
             sleepTimeline = {"start": most_recent[1]["sleep"], "end": most_recent[1]["wake"]}
             return duration, sleepTimeline
     
-    def get_recovery_burn(self, filepath, sleepLastNight, last_burn):
+    def get_recovery_burn(self, weights, sleepLastNight, last_burn):
         """
         If there is a sleepTargetsModel for the user, return the recoveryBurn and recoveryScore
         Otherwise, return None
@@ -70,9 +70,9 @@ class SleepModel():
         sleepLastNight: duration of sleep last night
         last_burn: the last burn score of the user
         """
-        if os.path.exists(filepath):
-            model = pickle.load(open(filepath, 'rb'))
-            change = model.predict_burn_change(sleepLastNight)
+        if len(weights) > 0:
+            coef, intercept = weights["coef"], weights["intercept"]
+            change = model.predict_burn_change(coef, intercept, sleepLastNight)
             recoveryBurn = last_burn + change
             return recoveryBurn, recoveryBurn - last_burn
         else:
