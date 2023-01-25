@@ -13,23 +13,26 @@ class SleepModel():
     REST_DURATION = 20 * 60
     SLEEP_RECOVERY_TIME = timedelta(seconds = 3600 * 1.5)
     
-    def get(self):
+    def get(self, data):
         """
         Returns a dictionary with all the outputs of the sleep model
         Fills values that cannot be found with None
         """
+        ios = data["dataFromIOS"]
+        database = data["dataFromDatabase"]
         #inputs to model
-        sleep_sample = self.fetch_sleep_sample()
-        acceleration_sample = self.fetch_acceleration_sample()
-        filepath = self.fetch_filepath() #should be the user ID
-        last_burn = self.fetch_last_burn() #should be the user ID
+        sleep_sample = ios["SleepSample"]
+        accelerometer_sample = ios["AccelerometerSample"]
+        filepath = database["userID"]
+        last_burn = database["lastBurn"]
 
-        # sleep_dict: {day (datetime day): {"duration": int, "source": String}} 
-        sleep_dict = getSleep(sleep_sample, acceleration_sample)
+        sleep_dict = getSleep(sleep_sample, accelerometer_sample)
         sleepLastNight, sleepTimeline = self.get_last_night(sleep_dict)
+
         if sleepLastNight == None:
             # No data for sleep last night
-            return None
+            return self.create_json()
+
         recoveryBurn, recoveryScore = self.get_recovery_burn(filepath, sleepLastNight, last_burn)
         if not recoveryBurn == None:
             focusTimeline = self.get_focus_timeline(recoveryBurn, sleepTimeline)
@@ -42,9 +45,12 @@ class SleepModel():
         """
         If there was recorded sleep last night, return the duration and timestamps
         Otherwise, return None
-        sleep_dict: {day (datetime day): {"duration": int, "source": String}} 
+        sleep_dict: {day (datetime day): {"duration": int, "source": String, "sleep": datetime, "wake": dateime}} 
         """
-        most_recent =  sorted(sleep_dict.items())[0]
+        if len(sleep_dict) == 0:
+            return None, None
+        sortedlist = sorted(sleep_dict.items())
+        most_recent = sortedlist[-1]
         if not most_recent[0] == date.today():
             return None, None
         else:
@@ -101,16 +107,12 @@ class SleepModel():
         sleep = {"start": end, "end": end + timedelta(3600 * 4), "level": 0}
         timeline.append(sleep)
         return timeline
-            
 
-    def fetch_sleep_sample(self):
+    def create_json(self, sleepLastNight=None, sleepTimeline=None, recoveryBurn=None, recoveryScore=None, focusTimeline=None):
         return None
     
-    def fetch_acceleration_sample(self):
-        return None
-    
-    def fetch_filepath(self):
-        return None
-    
-    def fetch_last_burn():
-        return None
+
+if __name__ == "__main__":
+    model = SleepModel()
+    model.get()
+    #new branch here
