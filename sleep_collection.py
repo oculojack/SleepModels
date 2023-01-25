@@ -28,10 +28,11 @@ Returns a dictionary of sleep of the form
     {day (datetime day): {"duration": int, "source": String, "sleep": datetime, "wake": datetime}} 
         "source" can be a name of a source from healthkit or "acceleration"
 """
-def getSleep(sleep_sample_file, acceleration_file):
+def getSleep(sleep_sample_data, acceleration_data):
 
-    hkSleep = getSleepFromSleepSample(sleep_sample_file)
-    accelerationSleep = getSleepFromAccelerationSample(acceleration_file)
+    #need to extract timezone for later
+    hkSleep, timezone = getSleepFromSleepSample(sleep_sample_data)
+    accelerationSleep = getSleepFromAccelerationSample(acceleration_data)
 
     if len(hkSleep) == 0: 
         first_hk_occurance = None
@@ -44,6 +45,7 @@ def getSleep(sleep_sample_file, acceleration_file):
     if first_accel_occurance == None and first_hk_occurance == None:
         # no sleep recorded
         return {}
+
     elif first_accel_occurance == None:
         begin_date = first_hk_occurance
     elif first_hk_occurance == None:
@@ -65,7 +67,7 @@ def getSleep(sleep_sample_file, acceleration_file):
             yesterday = begin_date + timedelta(days=day-1)
             sleep_dictionary[day] = sleep_dictionary[yesterday]
     
-    return sleep_dictionary
+    return sleep_dictionary, timezone
 
 """
 ------------------------------------Sleep Sample------------------------------------
@@ -99,6 +101,7 @@ def getSleepFromSleepSample(data):
     sleep_dict = {}
 
     for sample in data:
+        timezone = sample["timezone"]
         if sample["value"] == 0:
 
             wakeup_time, wakeup_day, fallasleep_time = getHKTimes(sample)
@@ -114,7 +117,7 @@ def getSleepFromSleepSample(data):
             
         duration = 0
         
-    return sleep_dict
+    return sleep_dict, timezone
 
 
 def getHKTimes(sample):

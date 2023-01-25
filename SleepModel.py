@@ -2,11 +2,10 @@
 Called when recieve a night of sleep. This will come as two json files, one for acceleration and one for healthkit.
 """
 
+from torch import NoneType
 from SleepTargetsModel import SleepTargetsModel
 from sleep_collection import *
 from datetime import datetime, timedelta, date, time, timezone
-import os.path
-import pickle
 
 class SleepModel():
     FOCUS_TIMELINE_RANGE = (60, 100)
@@ -24,26 +23,27 @@ class SleepModel():
 
         ios = data["dataFromIOS"]
         database = data["dataFromDatabase"]
+
         #inputs to model
         sleep_sample = ios["SleepSample"]
         accelerometer_sample = ios["AccelerometerSample"]
         weights = database["weights"]
-        last_burn = database["lastBurn"]
+        burn = database["burn"]
 
-        sleep_dict = getSleep(sleep_sample, accelerometer_sample)
+        sleep_dict, self.timezone = getSleep(sleep_sample, accelerometer_sample)
         sleepLastNight, sleepTimeline = self.get_last_night(sleep_dict)
 
         if sleepLastNight == None:
             # No data for sleep last night
-            return self.create_json()
+            return None
 
-        recoveryBurn, recoveryScore = self.get_recovery_burn(weights, sleepLastNight, last_burn)
+        recoveryBurn, recoveryScore = self.get_recovery_burn(weights, sleepLastNight, burn)
+
         if not recoveryBurn == None:
             focusTimeline = self.get_focus_timeline(recoveryBurn, sleepTimeline)
         else: focusTimeline = None
 
-        return {"sleepLastNight": str(sleepLastNight), "sleepTimeline": str(sleepTimeline), "recoveryBurn": str(recoveryBurn),\
-            "recoveryScore": str(recoveryScore), "focusTimeline": str(focusTimeline)}
+        print(self.create_dict(sleepLastNight, sleepTimeline, recoveryBurn, recoveryScore, focusTimeline))
 
     def get_last_night(self, sleep_dict):
         """
@@ -59,7 +59,7 @@ class SleepModel():
             return None, None
         else:
             duration = most_recent[1]["duration"]
-            sleepTimeline = {"start": most_recent[1]["sleep"], "end": most_recent[1]["wake"]}
+            sleepTimeline = {"start": most_recent[1]["sleep"], "end": most_recent[1]["wake"], "timezone": self.timezone}
             return duration, sleepTimeline
     
     def get_recovery_burn(self, weights, sleepLastNight, last_burn):
@@ -70,6 +70,7 @@ class SleepModel():
         sleepLastNight: duration of sleep last night
         last_burn: the last burn score of the user
         """
+        model = SleepTargetsModel()
         if len(weights) > 0:
             coef, intercept = weights["coef"], weights["intercept"]
             change = model.predict_burn_change(coef, intercept, sleepLastNight)
@@ -88,35 +89,35 @@ class SleepModel():
 
         fatigue_effect = (recovery_burn/100) * (self.FOCUS_TIMELINE_RANGE[1] - self.FOCUS_TIMELINE_RANGE[0])
         focus_duration = (self.FOCUS_TIMELINE_RANGE[1] - fatigue_effect) * 60
+        if focus_duration > self.FOCUS_TIMELINE_RANGE[1]: focus_duration = self.FOCUS_TIMELINE_RANGE[1]
+        if focus_duration < self.FOCUS_TIMELINE_RANGE[0]: focus_duration = self.FOCUS_TIMELINE_RANGE[0]
 
-        sleep = {"start": sleepTimeline["start"], "end": sleepTimeline["end"], "level": 0}
+        sleep = {"start": sleepTimeline["start"].timestamp(), "end": sleepTimeline["end"].timestamp(), "level": 0, "timezone": self.timezone}
         sleep_recovery_end = sleepTimeline["end"] + self.SLEEP_RECOVERY_TIME
-        sleep_recovery = {"start": sleepTimeline["end"], "end": sleep_recovery_end, "level": 1}
+        sleep_recovery = {"start": sleepTimeline["end"].timestamp(), "end": sleep_recovery_end.timestamp(), "level": 1, "timezone": self.timezone}
 
         timeline = [sleep, sleep_recovery]
         start = sleep_recovery_end
         end = sleepTimeline["start"]
         level = 1
-        while start < time(21):
+        while start.hour < 21:
             if level == 1:
                 end = start + timedelta(seconds=focus_duration)
                 level = 2
             else:
                 end = start + timedelta(seconds=self.REST_DURATION)
                 level = 1
-            interval = {"start": start, "end": end, "level": level}
+            interval = {"start": start.timestamp(), "end": end.timestamp(), "level": level, "timezone": self.timezone}
             timeline.append(interval)
             start = end
 
-        sleep = {"start": end, "end": end + timedelta(3600 * 4), "level": 0}
+        sleep = {"start": end.timestamp(), "end": (end + timedelta(seconds=3600 * 4)).timestamp(), "level": 0, "timezone": self.timezone}
         timeline.append(sleep)
         return timeline
 
-    def create_json(self, sleepLastNight=None, sleepTimeline=None, recoveryBurn=None, recoveryScore=None, focusTimeline=None):
-        return None
+    def create_dict(self, sleepLastNight=None, sleepTimeline=None, recoveryBurn=None, recoveryScore=None, focusTimeline=None):
+        sleepTimeline['start'] = sleepTimeline['start'].timestamp()
+        sleepTimeline['end'] = sleepTimeline['end'].timestamp()
+        return {"sleepLastNight": sleepLastNight, "sleepTimeline": sleepTimeline, 
+        "recoveryBurn": recoveryBurn, "recoveryScore": recoveryScore, "focusTimeline": focusTimeline}
     
-
-if __name__ == "__main__":
-    model = SleepModel()
-    model.get()
-    #new branch here

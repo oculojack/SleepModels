@@ -1,5 +1,9 @@
 {
     "burnPrev": 50,
-    "burnNow": 60,
-    "lastSleep": 14400
+    "burn": 40,
+    "lastSleep": 30000,
+    "weights": {
+        "coef": 10,
+        "intercept":10
+    }
 }
