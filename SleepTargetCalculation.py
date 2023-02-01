@@ -11,7 +11,7 @@ class SleepTargetCalculation():
 
     def get(self, data):
         """
-        Recieves a pieces of data from the backend and uses an instance of SleepTargetsModel
+        Recieves data from the backend and uses an instance of SleepTargetsModel
         to calculate sleep targets
         """
         f = open(data)

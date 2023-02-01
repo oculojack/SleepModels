@@ -43,7 +43,7 @@ class SleepModel():
             focusTimeline = self.get_focus_timeline(recoveryBurn, sleepTimeline)
         else: focusTimeline = None
 
-        print(self.create_dict(sleepLastNight, sleepTimeline, recoveryBurn, recoveryScore, focusTimeline))
+        return self.create_dict(sleepLastNight, sleepTimeline, recoveryBurn, recoveryScore, focusTimeline)
 
     def get_last_night(self, sleep_dict):
         """
@@ -53,14 +53,20 @@ class SleepModel():
         """
         if len(sleep_dict) == 0:
             return None, None
-        sortedlist = sorted(sleep_dict.items())
-        most_recent = sortedlist[-1]
-        if not most_recent[0] == date.today():
-            return None, None
-        else:
-            duration = most_recent[1]["duration"]
-            sleepTimeline = {"start": most_recent[1]["sleep"], "end": most_recent[1]["wake"], "timezone": self.timezone}
-            return duration, sleepTimeline
+        for day,dict in sleep_dict.items():
+            if day == date.today():
+                duration = dict["duration"]
+                sleepTimeline = {"start": dict["sleep"], "end": dict["wake"], "timezone": self.timezone}
+                return duration, sleepTimeline
+        return None, None
+        # sortedlist = sorted(sleep_dict.items())
+        # most_recent = sortedlist[-1]
+        # if not most_recent[0] == date.today():
+        #     return None, None
+        # else:
+        #     duration = most_recent[1]["duration"]
+        #     sleepTimeline = {"start": most_recent[1]["sleep"], "end": most_recent[1]["wake"], "timezone": self.timezone}
+        #     return duration, sleepTimeline
     
     def get_recovery_burn(self, weights, sleepLastNight, last_burn):
         """
@@ -121,3 +127,6 @@ class SleepModel():
         return {"sleepLastNight": sleepLastNight, "sleepTimeline": sleepTimeline, 
         "recoveryBurn": recoveryBurn, "recoveryScore": recoveryScore, "focusTimeline": focusTimeline}
     
+# if __name__ == "__main__":
+#     model = SleepModel()
+#     print(model.get("test_files/sleep_model_input.json"))
