@@ -11,6 +11,7 @@ class SleepModel():
     FOCUS_TIMELINE_RANGE = (60, 100)
     REST_DURATION = 20 * 60
     SLEEP_RECOVERY_TIME = timedelta(seconds = 3600 * 1.5)
+    SLEEP_BASELINE = timedelta(seconds = 3600 * 8)
     
     def get(self, data):
         """
@@ -37,13 +38,9 @@ class SleepModel():
             # No data for sleep last night
             return None
 
-        recoveryBurn, recoveryScore = self.get_recovery_burn(weights, sleepLastNight, burn)
+        focusTimeline = self.get_focus_timeline(sleepLastNight, sleepTimeline)
 
-        if not recoveryBurn == None:
-            focusTimeline = self.get_focus_timeline(recoveryBurn, sleepTimeline)
-        else: focusTimeline = None
-
-        return self.create_dict(sleepLastNight, sleepTimeline, recoveryBurn, recoveryScore, focusTimeline)
+        return self.create_dict(sleepLastNight, sleepTimeline, None, None, focusTimeline)
 
     def get_last_night(self, sleep_dict):
         """
@@ -59,14 +56,6 @@ class SleepModel():
                 sleepTimeline = {"start": dict["sleep"], "end": dict["wake"], "timezone": self.timezone}
                 return duration, sleepTimeline
         return None, None
-        # sortedlist = sorted(sleep_dict.items())
-        # most_recent = sortedlist[-1]
-        # if not most_recent[0] == date.today():
-        #     return None, None
-        # else:
-        #     duration = most_recent[1]["duration"]
-        #     sleepTimeline = {"start": most_recent[1]["sleep"], "end": most_recent[1]["wake"], "timezone": self.timezone}
-        #     return duration, sleepTimeline
     
     def get_recovery_burn(self, weights, sleepLastNight, last_burn):
         """
@@ -86,14 +75,14 @@ class SleepModel():
             #recovery burn not available
             return None, None
     
-    def get_focus_timeline(self, recovery_burn, sleepTimeline):
+    def get_focus_timeline(self, sleepDuration, sleepTimeline):
         """
         Return the focus timeline
         recoveryBurn: burn for this morning
         sleepTimeline: timestamps of sleep last night
         """
 
-        fatigue_effect = (recovery_burn/100) * (self.FOCUS_TIMELINE_RANGE[1] - self.FOCUS_TIMELINE_RANGE[0])
+        fatigue_effect =  (sleepDuration / self.SLEEP_BASELINE.seconds) * (self.FOCUS_TIMELINE_RANGE[1] - self.FOCUS_TIMELINE_RANGE[0])
         focus_duration = (self.FOCUS_TIMELINE_RANGE[1] - fatigue_effect) * 60
         if focus_duration > self.FOCUS_TIMELINE_RANGE[1]: focus_duration = self.FOCUS_TIMELINE_RANGE[1]
         if focus_duration < self.FOCUS_TIMELINE_RANGE[0]: focus_duration = self.FOCUS_TIMELINE_RANGE[0]
