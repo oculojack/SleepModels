@@ -40,7 +40,7 @@ class SleepModel():
 
         focusTimeline = self.get_focus_timeline(sleepLastNight, sleepTimeline)
 
-        return self.create_dict(sleepLastNight, sleepTimeline, None, None, focusTimeline)
+        return self.create_dict(sleepLastNight, sleepTimeline, None, focusTimeline)
 
     def get_last_night(self, sleep_dict):
         """
@@ -59,7 +59,7 @@ class SleepModel():
     
     def get_recovery_burn(self, weights, sleepLastNight, last_burn):
         """
-        If there is a sleepTargetsModel for the user, return the recoveryBurn and recoveryScore
+        If there is a sleepTargetsModel for the user, return the recoveryBurn 
         Otherwise, return None
         filepath: filepath to user's model, should be UserID
         sleepLastNight: duration of sleep last night
@@ -70,10 +70,10 @@ class SleepModel():
             coef, intercept = weights["coef"], weights["intercept"]
             change = model.predict_burn_change(coef, intercept, sleepLastNight)
             recoveryBurn = last_burn + change
-            return recoveryBurn, recoveryBurn - last_burn
+            return recoveryBurn
         else:
             #recovery burn not available
-            return None, None
+            return None
     
     def get_focus_timeline(self, sleepDuration, sleepTimeline):
         """
@@ -87,9 +87,9 @@ class SleepModel():
         if focus_duration > self.FOCUS_TIMELINE_RANGE[1]: focus_duration = self.FOCUS_TIMELINE_RANGE[1]
         if focus_duration < self.FOCUS_TIMELINE_RANGE[0]: focus_duration = self.FOCUS_TIMELINE_RANGE[0]
 
-        sleep = {"start": sleepTimeline["start"].timestamp(), "end": sleepTimeline["end"].timestamp(), "level": 0, "timezone": self.timezone}
+        sleep = {"start": int(sleepTimeline["start"].timestamp()), "end": int(sleepTimeline["end"].timestamp()), "level": 0, "timezone": self.timezone}
         sleep_recovery_end = sleepTimeline["end"] + self.SLEEP_RECOVERY_TIME
-        sleep_recovery = {"start": sleepTimeline["end"].timestamp(), "end": sleep_recovery_end.timestamp(), "level": 1, "timezone": self.timezone}
+        sleep_recovery = {"start": int(sleepTimeline["end"].timestamp()), "end": int(sleep_recovery_end.timestamp()), "level": 1, "timezone": self.timezone}
 
         timeline = [sleep, sleep_recovery]
         start = sleep_recovery_end
@@ -102,20 +102,20 @@ class SleepModel():
             else:
                 end = start + timedelta(seconds=self.REST_DURATION)
                 level = 1
-            interval = {"start": start.timestamp(), "end": end.timestamp(), "level": level, "timezone": self.timezone}
+            interval = {"start": int(start.timestamp()), "end": int(end.timestamp()), "level": level, "timezone": self.timezone}
             timeline.append(interval)
             start = end
 
-        sleep = {"start": end.timestamp(), "end": (end + timedelta(seconds=3600 * 4)).timestamp(), "level": 0, "timezone": self.timezone}
+        sleep = {"start": int(end.timestamp()), "end": int((end + timedelta(seconds=3600 * 4)).timestamp()), "level": 0, "timezone": self.timezone}
         timeline.append(sleep)
         return timeline
 
-    def create_dict(self, sleepLastNight=None, sleepTimeline=None, recoveryBurn=None, recoveryScore=None, focusTimeline=None):
-        sleepTimeline['start'] = sleepTimeline['start'].timestamp()
-        sleepTimeline['end'] = sleepTimeline['end'].timestamp()
+    def create_dict(self, sleepLastNight=None, sleepTimeline=None, recoveryBurn=None, focusTimeline=None):
+        sleepTimeline['start'] = int(sleepTimeline['start'].timestamp())
+        sleepTimeline['end'] = int(sleepTimeline['end'].timestamp())
         return {"sleepLastNight": sleepLastNight, "sleepTimeline": sleepTimeline, 
-        "recoveryBurn": recoveryBurn, "recoveryScore": recoveryScore, "focusTimeline": focusTimeline}
+        "recoveryBurn": recoveryBurn,  "focusTimeline": focusTimeline}
     
 # if __name__ == "__main__":
 #     model = SleepModel()
-#     print(model.get("test_files/sleep_model_input.json"))
+#     print(model.get("test_files/payload.json"))
