@@ -31,20 +31,20 @@ Returns a dictionary of sleep of the form
 def getSleep(sleep_sample_data, acceleration_data):
 
     #need to extract timezone for later
-    hkSleep, timezone = getSleepFromSleepSample(sleep_sample_data)
-    accelerationSleep = getSleepFromAccelerationSample(acceleration_data)
+    hkSleep, timezone = getSleepFromSleepSample(sleep_sample_data) if not sleep_sample_data == None else None, None
+    accelerationSleep = getSleepFromAccelerationSample(acceleration_data) if not acceleration_data == None else None
 
-    if len(hkSleep) == 0: 
+    if hkSleep == None or len(hkSleep) == 0: 
         first_hk_occurance = None
     else: first_hk_occurance = sorted(hkSleep.items())[0][0]
 
-    if len(accelerationSleep) == 0:
+    if accelerationSleep == None or len(accelerationSleep) == 0:
         first_accel_occurance = None
     else: first_accel_occurance = sorted(accelerationSleep.items())[0][0]
 
     if first_accel_occurance == None and first_hk_occurance == None:
         # no sleep recorded
-        return {}
+        return None, None
 
     elif first_accel_occurance == None:
         begin_date = first_hk_occurance
@@ -54,7 +54,12 @@ def getSleep(sleep_sample_data, acceleration_data):
         begin_date = min(first_hk_occurance, first_accel_occurance)
     
     sleep_dictionary = dict()
-    all_days = set(list(hkSleep.keys())) | set(list(accelerationSleep.keys()))
+    if accelerationSleep == None:
+        all_days = set(list(hkSleep.keys()))
+    elif hkSleep == None:
+        all_days = set(list(accelerationSleep.keys()))
+    else:
+        all_days = set(list(hkSleep.keys())) | set(list(accelerationSleep.keys()))
 
     for day in all_days:
         if day in hkSleep and hkSleep[day]['source'] != "Clock":

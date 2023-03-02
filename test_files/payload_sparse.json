@@ -1,0 +1,11 @@
+{
+  "dataFromDatabase": {
+    "weights": {
+      "coef": 10,
+      "intercept": 10
+    },
+    "burn": 50
+  },
+  "dataFromIOS": {
+  }
+}

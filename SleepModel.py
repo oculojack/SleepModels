@@ -2,7 +2,6 @@
 Called when recieve a night of sleep. This will come as two json files, one for acceleration and one for healthkit.
 """
 
-from torch import NoneType
 from SleepTargetsModel import SleepTargetsModel
 from sleep_collection import *
 from datetime import datetime, timedelta, date, time, timezone
@@ -26,16 +25,23 @@ class SleepModel():
         database = data["dataFromDatabase"]
 
         #inputs to model
-        sleep_sample = ios["SleepSample"]
-        accelerometer_sample = ios["AccelerometerSample"]
-        weights = database["weights"]
-        burn = database["burn"]
+        sleep_sample = ios["SleepSample"] if "SleepSample" in ios else None
+        accelerometer_sample = ios["AccelerometerSample"] if "AccelerometerSample" in ios else None
+        weights = database["weights"] if "weights" in ios else None
+        burn = database["burn"] if "burn" in ios else None
 
         sleep_dict, self.timezone = getSleep(sleep_sample, accelerometer_sample)
+
+        if sleep_dict == None:
+            # No data for sleep last night
+            print("No sleep recorded")
+            return None
+
         sleepLastNight, sleepTimeline = self.get_last_night(sleep_dict)
 
         if sleepLastNight == None:
             # No data for sleep last night
+            print("No sleep recorded")
             return None
 
         focusTimeline = self.get_focus_timeline(sleepLastNight, sleepTimeline)
@@ -118,4 +124,4 @@ class SleepModel():
     
 # if __name__ == "__main__":
 #     model = SleepModel()
-#     print(model.get("test_files/payload.json"))
+#     print(model.get("test_files/payload_sparse.json"))

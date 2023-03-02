@@ -1,0 +1,20 @@
+{
+  "dataFromDatabase": {
+    "weights": {
+      "coef": 10,
+      "intercept": 10
+    },
+    "burn": 50
+  },
+  "dataFromIOS": {
+    "SleepSample": [
+      {
+        "value": 0,
+        "startDate": 1677571692,
+        "endDate": 1677571961,
+        "source": "D0WDGQY7H5",
+        "timezone": 1
+      }
+    ]
+  }
+}
